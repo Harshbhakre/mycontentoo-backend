@@ -13,7 +13,9 @@ mongoose.connect(process.env.MONGO_URI)
 
 const app = express();
 
-app.use(cors({ origin: "*" }));
+app.use(cors());
+app.options('*', cors());
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
