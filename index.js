@@ -1,12 +1,15 @@
 import express from "express";
+import session from "express-session";
 import mongoose from "mongoose";
-import { contentModel } from "./ContentModel.js";
+import { contentModel } from "./Models/ContentModel.js";
 import cors from "cors";
 import dotenv from "dotenv";
+import { login, signup } from "./Controller/UserController.js";
+import { AuthUser } from "./Utils/Auth.js";
 dotenv.config();
 
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URL)
 .then(() => console.log("✅ Connected to MongoDB"))
 .catch(err => console.error("❌ Failed to connect to DB:", err));
 
@@ -14,11 +17,17 @@ mongoose.connect(process.env.MONGO_URI)
 const app = express();
 
 app.use(cors());
-app.options('*', cors());
 
 app.use(express.json());
-
-app.get("/", (req, res) => {
+app.use(
+  session({
+    secret: "dummy key",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }
+  })
+);
+app.get("/",AuthUser, (req, res) => {
   contentModel
     .find()
     .then((response) => {
@@ -28,7 +37,7 @@ app.get("/", (req, res) => {
       res.status(401).json(`failed to get data ${err}`);
     });
 });
-app.get("/:id", (req, res) => {
+app.get("/:id",AuthUser, (req, res) => {
   contentModel
     .findOne({ _id: req.params.id })
     .then((response) => {
@@ -40,7 +49,7 @@ app.get("/:id", (req, res) => {
     });
 });
 
-app.post("/content", (req, res) => {
+app.post("/content",AuthUser, (req, res) => {
   let newData = new contentModel({
     title: req.body.title,
     genre: req.body.genre,
@@ -56,7 +65,7 @@ app.post("/content", (req, res) => {
     .catch((err) => res.status(400).json("failed to save data" + err));
 });
 
-app.delete('/content/:id',(req,res)=>{
+app.delete('/content/:id',AuthUser,(req,res)=>{
     contentModel
     .findOneAndDelete({ _id: req.params.id })
     .then((response) => {
@@ -67,7 +76,7 @@ app.delete('/content/:id',(req,res)=>{
       res.status(401).end(`failed to get data ${err}`);
     });
 })
-app.put('/content/:id',(req,res)=>{
+app.put('/content/:id',AuthUser,(req,res)=>{
     contentModel
     .findByIdAndUpdate({ _id: req.params.id },
       req.body
@@ -81,4 +90,8 @@ app.put('/content/:id',(req,res)=>{
     });
 })
 
-export default app;
+app.post("/signup",signup)
+app.post('/login',login)
+app.listen(3000,()=>{
+  console.log('listening to port 3000')
+})
