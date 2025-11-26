@@ -1,6 +1,5 @@
-export const AuthUser = (req,res,next)=>{
-    if(!req.session.userId){
-       return res.status(400).end("please login")
-    }
-    next()
-}
+export const AuthUser = (req, res, next) => {
+  const userId = req.body.userId;
+  if (!userId) return res.status(401).end("Please login first");
+  next();
+};

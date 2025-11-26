@@ -12,6 +12,10 @@ const userModel = new mongoose.Schema({
     password:{
         type:String,
         require:true
+    },
+    contentAccessRequest:{
+        require:true,
+        type: Array,
     }
 })
 

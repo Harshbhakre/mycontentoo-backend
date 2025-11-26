@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import { contentModel } from "./Models/ContentModel.js";
 import cors from "cors";
 import dotenv from "dotenv";
-import { login, signup } from "./Controller/UserController.js";
+import { login, signup,reqToAccess, allowAccess, removeUser } from "./Controller/UserController.js";
 import { AuthUser } from "./Utils/Auth.js";
 dotenv.config();
 
@@ -13,21 +13,13 @@ mongoose.connect(process.env.MONGO_URL)
 .then(() => console.log("✅ Connected to MongoDB"))
 .catch(err => console.error("❌ Failed to connect to DB:", err));
 
-
 const app = express();
 
-app.use(cors());
-
+app.use(cors({ origin: ["http://localhost:5173", "https://my-contentoo-frondend.vercel.app"], credentials: true }));
 app.use(express.json());
-app.use(
-  session({
-    secret: "dummy key",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
-  })
-);
-app.get("/",AuthUser, (req, res) => {
+app.get("/favicon.ico", (req,res)=> res.status(204).end());
+
+app.get("/", (req, res) => {
   contentModel
     .find()
     .then((response) => {
@@ -37,7 +29,7 @@ app.get("/",AuthUser, (req, res) => {
       res.status(401).json(`failed to get data ${err}`);
     });
 });
-app.get("/:id",AuthUser, (req, res) => {
+app.get("/:id", (req, res) => {
   contentModel
     .findOne({ _id: req.params.id })
     .then((response) => {
@@ -49,7 +41,7 @@ app.get("/:id",AuthUser, (req, res) => {
     });
 });
 
-app.post("/content",AuthUser, (req, res) => {
+app.post("/content", (req, res) => {
   let newData = new contentModel({
     title: req.body.title,
     genre: req.body.genre,
@@ -65,7 +57,7 @@ app.post("/content",AuthUser, (req, res) => {
     .catch((err) => res.status(400).json("failed to save data" + err));
 });
 
-app.delete('/content/:id',AuthUser,(req,res)=>{
+app.delete('/content/:id',(req,res)=>{
     contentModel
     .findOneAndDelete({ _id: req.params.id })
     .then((response) => {
@@ -76,7 +68,7 @@ app.delete('/content/:id',AuthUser,(req,res)=>{
       res.status(401).end(`failed to get data ${err}`);
     });
 })
-app.put('/content/:id',AuthUser,(req,res)=>{
+app.put('/content/:id',(req,res)=>{
     contentModel
     .findByIdAndUpdate({ _id: req.params.id },
       req.body
@@ -91,7 +83,15 @@ app.put('/content/:id',AuthUser,(req,res)=>{
 })
 
 app.post("/signup",signup)
-app.post('/login',login)
-app.listen(3000,()=>{
-  console.log('listening to port 3000')
-})
+app.post("/login",login)
+
+app.post('/request',reqToAccess)
+
+app.post("/allowaccess",allowAccess)
+app.post("/removeaccess",removeUser)
+
+export default app;
+// app.listen(3000,()=>{
+//   console.log("listenting to port 3000");
+  
+// })

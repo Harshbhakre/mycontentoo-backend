@@ -26,6 +26,9 @@ const Model = new Schema({
     required: [true,"please fill the form properly"],
     type: Number,
   },
+ users:{
+    requestUserId: String
+  }
 });
 
 export const contentModel = mongoose.model("contentModel", Model);
